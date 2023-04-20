@@ -19,3 +19,6 @@ it should generate a report named "report.txt", which reflects the backtest log 
 Feel free to modify anything :)
 
 You can also play around with the plotter.py to plot your result (but you need to modify the output of the backtester)
+
+if you just want to output report, compile with augment <mark>-getReport</mark>,
+otherwise it would only output time and equity, which is used to help plotting for plotter.py

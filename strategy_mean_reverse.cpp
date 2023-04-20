@@ -231,7 +231,9 @@ public:
                 if (pnl <= -1*stoploss || pnl >= takeprofit) {
                     // close order here
                     balance += pnl;
+                    #ifdef getReport
                     std::cout << "closed order: " << cur->order.id << ' ' << cur->order.calcPnL(curPrice) << ' ' << curPrice << std::endl;
+                    #endif
                     if (cur == this->head) {
                         this->head = cur->next;
                         cur = this->head;
@@ -383,6 +385,8 @@ public:
         int i = 0;
         reverse(histData.begin(), histData.end());
         for (auto p : histData) {
+            if (p.date <= start) continue;
+            if (end <= p.date) break;
             ++ i;
             strategy.checkForClose(this->equity, p, this->balance);
             strategy.normalize_tradesize(this->equity);
@@ -391,15 +395,19 @@ public:
                 std::cout << "Got liquidated! GG\n";
                 break;
             }
+            std::cout << p.date.show() << ",";
+            #ifdef getReport
             printf("#############################################\n");
-            std::cout << p.date.show() << ":\n";
             std::cout << "balance: " << this->balance << "\n";
+            #endif
             std::cout << "" << this->equity << "\n";
+            #ifdef getReport
             std::cout << "current ETH price at: " << p.close << "\n";
             this->maximum_drawdown = fmax(this->maximum_drawdown, (this->balance - this->equity) / this->balance *100);
             std::cout << "current maximum drawdown: " << this->maximum_drawdown << "%" << std::endl;
             strategy.displayOrders(p.close);
             printf("#############################################\n");
+            #endif
             // sleep(1);
         }
         
@@ -409,6 +417,6 @@ public:
 int main() {
     freopen("report.txt", "w", stdout);
     Backtester tester("ETH-USDT.csv");
-    tester.run("2018-10-12 16:00:00", "2023-04-18 20:00:00");
+    tester.run("2020-10-12 16:00:00", "2023-04-18 20:00:00");
     return 0;
 }

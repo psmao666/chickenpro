@@ -352,13 +352,14 @@ public:
     std::vector<CandleStick> histData;
     double balance;
     double equity;
+    double maximum_drawdown;
 
     Backtester() {}
     Backtester(std::string coinDataFile) {
         std::ifstream file(coinDataFile);
         this->balance = 10000; // initial deposit is 10000 usdt
         this->equity = this->balance; // equity is balance as we don't have any orders yet
-
+        this->maximum_drawdown = 0;
         // Read each line of the file and split it into tokens
         std::string line, token;
         int ind = 0;
@@ -379,9 +380,10 @@ public:
         Strategy strategy(50);
         timeType start(start_time);
         timeType end(end_time);
-        int increment = 0;
+        int i = 0;
         reverse(histData.begin(), histData.end());
         for (auto p : histData) {
+            ++ i;
             strategy.checkForClose(this->equity, p, this->balance);
             strategy.normalize_tradesize(this->equity);
             strategy.checkForOpen(this->balance, this->equity, p, 0.01);
@@ -392,8 +394,10 @@ public:
             printf("#############################################\n");
             std::cout << p.date.show() << ":\n";
             std::cout << "balance: " << this->balance << "\n";
-            std::cout << "equity: " << this->equity << "\n";
+            std::cout << "" << this->equity << "\n";
             std::cout << "current ETH price at: " << p.close << "\n";
+            this->maximum_drawdown = fmax(this->maximum_drawdown, (this->balance - this->equity) / this->balance *100);
+            std::cout << "current maximum drawdown: " << this->maximum_drawdown << "%" << std::endl;
             strategy.displayOrders(p.close);
             printf("#############################################\n");
             // sleep(1);
@@ -403,7 +407,7 @@ public:
 };
 
 int main() {
-    freopen("hisotry.txt", "w", stdout);
+    freopen("report.txt", "w", stdout);
     Backtester tester("ETH-USDT.csv");
     tester.run("2018-10-12 16:00:00", "2023-04-18 20:00:00");
     return 0;

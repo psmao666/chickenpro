@@ -246,6 +246,7 @@ public:
             }
         }
         void display(const double& curPrice) {
+            return;
             std::shared_ptr<node> cur = this->head;
             while (cur != nullptr) {
                 std::cout << "orderID: " << cur->order.id << ", ";
@@ -404,7 +405,7 @@ public:
 };
 
 int main() {
-    //freopen("hisotry.txt", "w", stdout);
+    freopen("hisotry.txt", "w", stdout);
     Backtester tester("ETH-USDT.csv");
     tester.run("2018-10-12 16:00:00", "2023-04-18 20:00:00");
     return 0;

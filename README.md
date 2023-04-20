@@ -1,4 +1,5 @@
 # chickenpro
+\usepackage{listings}
 
 Welcome to ChickenPro (chickenproject 2.0)!
 

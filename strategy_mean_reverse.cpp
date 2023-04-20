@@ -147,7 +147,7 @@ public:
     double open, high, low, close, vol, volCcy, volCcyQuote;
     bool confirm;
     CandleStick() {}
-    CandleStick(timeType _date, double _open, double _high, double _close, double _low, double _vol, double _volCcy, double _volCcyQuote, std::string _confirm) {
+    CandleStick(timeType _date, double _open, double _high, double _low, double _close, double _vol, double _volCcy, double _volCcyQuote, std::string _confirm) {
         this->date = _date;
         this->open = _open;
         this->high = _high;
@@ -231,8 +231,10 @@ public:
                 if (pnl <= -1*stoploss || pnl >= takeprofit) {
                     // close order here
                     balance += pnl;
+                    std::cout << "closed order: " << cur->order.id << ' ' << cur->order.calcPnL(curPrice) << ' ' << curPrice << std::endl;
                     if (cur == this->head) {
                         this->head = cur->next;
+                        cur = this->head;
                         if (this->head != nullptr) 
                             this->head->prev = nullptr;
                         continue;
@@ -246,7 +248,6 @@ public:
             }
         }
         void display(const double& curPrice) {
-            return;
             std::shared_ptr<node> cur = this->head;
             while (cur != nullptr) {
                 std::cout << "orderID: " << cur->order.id << ", ";
@@ -314,10 +315,7 @@ public:
         this->ave += newData.close;
         dataStream.push_back(newData.close);
         this->ave /= dataStream.size();
-        
-        // check if hit moving average
-        std::cout << "(current price, 50day average): ";
-        std::cout << newData.close << ' ' << this->ave << std::endl;
+
         if (fabs(newData.close - this->ave) < 3) {
             int trend = (newData.open < newData.close);
             if (trend == CandleStickType::Bearish) {
@@ -340,7 +338,7 @@ public:
         orderbook.displayOrders(marketPrice);
     }
     inline void normalize_tradesize(double equity) {
-        this->tradesize = equity * 0.02; // always risk with 2% of our equity only
+        this->tradesize = equity * 0.3; // always risk with 2% of our equity only
     }
     virtual ~Strategy() {
         while (!dataStream.empty()) {

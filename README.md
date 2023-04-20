@@ -4,9 +4,9 @@ Welcome to ChickenPro (chickenproject 2.0)!
 
 First thing you need to do is to run an virtual environment with Python
 
-'''
+```
 python -m venv env
-'''
+```
 
 Then, run dataCollector.py to obtain historical data of one specific instrument
 

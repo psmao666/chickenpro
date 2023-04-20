@@ -185,8 +185,8 @@ public:
     public:
         class node{
         public:
-            node* prev;
-            node* next;
+            std::shared_ptr<node> prev;
+            std::shared_ptr<node> next;
             Order order;
             node() {
                 this->prev = nullptr;
@@ -198,24 +198,25 @@ public:
                 this->next = nullptr;
             }
         };
-        node* head;
+        std::shared_ptr<node> head;
         LinkList() {
             this->head = nullptr;
         }
         void insert(Order _order) {
             if (this->head == nullptr) {
-                this->head = new node(_order);
+                this->head = std::make_shared<node>(node(_order));
                 return;
             }
-            node* cur = this->head;
+            std::shared_ptr<node> cur = this->head;
             while (cur->next != nullptr) {
                 cur = cur->next;
             }
-            cur->next = new node(_order);
+            cur->next = std::make_shared<node>(node(_order));
+            cur->next->prev = cur;
         }
         double getEquity(const double balance, const double curPrice) {
             double equity = balance;
-            node* cur = this->head;
+            std::shared_ptr<node> cur = this->head;    
             while (cur != nullptr) {
                 equity += cur->order.calcPnL(curPrice);
                 equity -= cur->order.lot;
@@ -223,28 +224,29 @@ public:
             }
             return equity;
         }
-        void cleanOrders(double& balance, const double& curPrice, const double& stoploss, const double& takeprofit) {
-            node* cur = this->head;
+        void cleanOrders(double& balance, const double curPrice, const double stoploss, const double takeprofit) {
+            std::shared_ptr<node> cur = this->head;
             while (cur != nullptr) {
                 double pnl = cur->order.calcPnL(curPrice);
                 if (pnl <= -1*stoploss || pnl >= takeprofit) {
                     // close order here
                     balance += pnl;
+                    if (cur == this->head) {
+                        this->head = cur->next;
+                        if (this->head != nullptr) 
+                            this->head->prev = nullptr;
+                        continue;
+                    }
                     if (cur->prev != nullptr) cur->prev->next = cur->next;
                     if (cur->next != nullptr) cur->next->prev = cur->prev;
-                    node* tmp = cur->next;
-                    if (cur == this->head) {
-                        this->head = tmp;
-                    }
-                    delete cur;
-                    cur = tmp;
+                    cur = cur->next;
                     continue;
                 }
                 cur = cur->next;
             }
         }
         void display(const double& curPrice) {
-            node* cur = this->head;
+            std::shared_ptr<node> cur = this->head;
             while (cur != nullptr) {
                 std::cout << "orderID: " << cur->order.id << ", ";
                 if (cur->order.direction == Action::Long) {
@@ -255,15 +257,6 @@ public:
                 printf("and this order has an PnL of $%.5f\n", cur->order.calcPnL(curPrice));
                 cur = cur->next;
             }
-        }
-        ~LinkList() {
-            node* cur = this->head;
-            while(cur != nullptr) {
-                node* tmp = cur->next;
-                delete cur;
-                cur = tmp;
-            }
-            this->head = nullptr;
         }
     };
     LinkList orders;
@@ -339,7 +332,7 @@ public:
         }
     }
     void checkForClose(double& equity, const CandleStick& newData, double& balance) {
-        //orderbook.orders.cleanOrders(balance, newData.close, balance * this->sl_level, balance * this->tp_level);
+        orderbook.orders.cleanOrders(balance, newData.close, balance * this->sl_level, balance * this->tp_level);
         orderbook.updateEquity(equity, newData.close, balance);
     }
     void displayOrders(const double& marketPrice) {
@@ -393,6 +386,10 @@ public:
             strategy.checkForClose(this->equity, p, this->balance);
             strategy.normalize_tradesize(this->equity);
             strategy.checkForOpen(this->balance, this->equity, p, 0.01);
+            if (this->equity < 0) {
+                std::cout << "Got liquidated! GG\n";
+                break;
+            }
             printf("#############################################\n");
             std::cout << p.date.show() << ":\n";
             std::cout << "balance: " << this->balance << "\n";
@@ -407,7 +404,7 @@ public:
 };
 
 int main() {
-    freopen("hisotry.txt", "w", stdout);
+    //freopen("hisotry.txt", "w", stdout);
     Backtester tester("ETH-USDT.csv");
     tester.run("2018-10-12 16:00:00", "2023-04-18 20:00:00");
     return 0;
